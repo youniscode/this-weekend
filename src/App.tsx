@@ -73,6 +73,7 @@ function formatWeekendAsText(
 
   return lines.join("\n");
 }
+
 interface WeekendPlanRequest {
   form: WeekendFormData;
 }
@@ -751,13 +752,29 @@ function ResultPage() {
         </div>
 
         {/* Bottom actions */}
-        <div className="flex flex-col md:flex-row justify-between gap-3">
+        <div className="flex flex-col md:flex-row gap-3">
           <a
             href="/plan"
             className="px-4 py-2 rounded-xl border border-slate-700 text-sm text-slate-300 hover:border-slate-500 transition text-center flex-1"
           >
             Edit answers
           </a>
+          <button
+            type="button"
+            onClick={() => {
+              const text = formatWeekendAsText(weekend, form);
+              if (navigator && navigator.clipboard) {
+                navigator.clipboard
+                  .writeText(text)
+                  .catch((err) =>
+                    console.error("Failed to copy weekend plan", err)
+                  );
+              }
+            }}
+            className="px-5 py-2 rounded-xl text-sm font-semibold bg-slate-800 text-slate-100 border border-slate-600 shadow hover:scale-[1.02] transition flex-1"
+          >
+            Copy plan
+          </button>
           <button
             type="button"
             onClick={handleRegenerate}
