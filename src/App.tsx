@@ -565,6 +565,7 @@ function ResultPage() {
   const form = location.state as WeekendFormData | undefined;
 
   const [itinerary, setItinerary] = useState<WeekendItinerary | null>(null);
+  const [regenLoading, setRegenLoading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -581,6 +582,19 @@ function ResultPage() {
       cancelled = true;
     };
   }, [form]);
+
+  const handleRegenerate = async () => {
+    if (!form) return;
+    setRegenLoading(true);
+    try {
+      const result = await generateWeekendItinerary(form);
+      setItinerary(result);
+    } catch (err) {
+      console.error("Failed to regenerate weekend plan", err);
+    } finally {
+      setRegenLoading(false);
+    }
+  };
 
   if (!form) {
     return (
@@ -746,15 +760,11 @@ function ResultPage() {
           </a>
           <button
             type="button"
-            onClick={() => {
-              const text = formatWeekendAsText(weekend, form);
-              navigator.clipboard.writeText(text).catch((err) => {
-                console.error("Failed to copy weekend plan", err);
-              });
-            }}
-            className="px-5 py-2 rounded-xl text-sm font-semibold bg-white text-slate-900 shadow hover:scale-[1.02] transition flex-1"
+            onClick={handleRegenerate}
+            disabled={regenLoading}
+            className="px-5 py-2 rounded-xl text-sm font-semibold bg-white text-slate-900 shadow hover:scale-[1.02] transition flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Copy plan to clipboard
+            {regenLoading ? "Regenerating…" : "Regenerate plan"}
           </button>
         </div>
       </div>
