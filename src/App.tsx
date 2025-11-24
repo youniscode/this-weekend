@@ -205,6 +205,33 @@ async function generateWeekendItinerary(
   };
 }
 
+function buildShareQuery(form: WeekendFormData): string {
+  const params = new URLSearchParams();
+  params.set("city", form.city);
+  params.set("group", form.group);
+  params.set("mood", form.mood);
+  params.set("budget", form.budget);
+  params.set("days", form.days);
+  return params.toString();
+}
+
+function formFromSearch(search: string): WeekendFormData | undefined {
+  const params = new URLSearchParams(
+    search.startsWith("?") ? search : `?${search}`
+  );
+
+  const city = params.get("city") ?? "";
+  const group = (params.get("group") ?? "") as GroupType;
+  const mood = (params.get("mood") ?? "") as MoodType;
+  const budget = (params.get("budget") ?? "") as BudgetLevel;
+  const days = (params.get("days") ?? "") as DaysOption;
+
+  // Minimal validation: require city + days
+  if (!city || !days) return undefined;
+
+  return { city, group, mood, budget, days };
+}
+
 function HomeHero() {
   const navigate = useNavigate();
 
@@ -563,10 +590,15 @@ function PlanPage() {
 
 function ResultPage() {
   const location = useLocation();
-  const form = location.state as WeekendFormData | undefined;
+
+  const stateForm = location.state as WeekendFormData | undefined;
+  const urlForm =
+    !stateForm && location.search ? formFromSearch(location.search) : undefined;
+  const form = stateForm ?? urlForm;
 
   const [itinerary, setItinerary] = useState<WeekendItinerary | null>(null);
   const [regenLoading, setRegenLoading] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -595,6 +627,28 @@ function ResultPage() {
     } finally {
       setRegenLoading(false);
     }
+  };
+
+  const handleShareLink = () => {
+    if (!form) return;
+
+    const query = buildShareQuery(form);
+    if (typeof window === "undefined" || !navigator?.clipboard) return;
+
+    const url = `${window.location.origin}/results?${query}`;
+
+    navigator.clipboard
+      .writeText(url)
+      .then(() => {
+        setShareCopied(true);
+        setTimeout(() => setShareCopied(false), 1500);
+      })
+      .catch((err) => console.error("Failed to copy share link", err));
+  };
+
+  const handlePrint = () => {
+    if (typeof window === "undefined") return;
+    window.print();
   };
 
   if (!form) {
@@ -759,6 +813,15 @@ function ResultPage() {
           >
             Edit answers
           </a>
+
+          <button
+            type="button"
+            onClick={handleShareLink}
+            className="px-5 py-2 rounded-xl text-sm font-semibold bg-slate-800 text-slate-100 border border-slate-600 shadow hover:scale-[1.02] transition flex-1"
+          >
+            {shareCopied ? "Link copied ✓" : "Copy share link"}
+          </button>
+
           <button
             type="button"
             onClick={() => {
@@ -773,8 +836,17 @@ function ResultPage() {
             }}
             className="px-5 py-2 rounded-xl text-sm font-semibold bg-slate-800 text-slate-100 border border-slate-600 shadow hover:scale-[1.02] transition flex-1"
           >
-            Copy plan
+            Copy plan text
           </button>
+
+          <button
+            type="button"
+            onClick={handlePrint}
+            className="px-5 py-2 rounded-xl text-sm font-semibold bg-white text-slate-900 shadow hover:scale-[1.02] transition flex-1"
+          >
+            Print / Save PDF
+          </button>
+
           <button
             type="button"
             onClick={handleRegenerate}
