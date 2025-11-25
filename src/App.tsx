@@ -137,6 +137,127 @@ interface WeekendPlanResponse {
   itinerary: WeekendItinerary;
 }
 
+type IconProps = {
+  className?: string;
+};
+
+const IconEdit = ({ className }: IconProps) => (
+  <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none">
+    <path
+      d="M5 19.5 5.75 15 15.5 5.25 18.75 8.5 9 18.25 5 19.5Z"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M13.75 7 17 10.25"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const IconPrint = ({ className }: IconProps) => (
+  <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none">
+    <path
+      d="M7 9V4.5h10V9"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <rect
+      x="6"
+      y="9"
+      width="12"
+      height="7"
+      rx="1.5"
+      stroke="currentColor"
+      strokeWidth="1.6"
+    />
+    <path
+      d="M8 16.5h8V20H8v-3.5Z"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <circle cx="9" cy="11.5" r="0.9" fill="currentColor" />
+  </svg>
+);
+
+const IconRefresh = ({ className }: IconProps) => (
+  <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none">
+    <path
+      d="M6 12a6 6 0 0 1 10.24-4.24L18 9.5M16.24 5.5H18V4"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M18 12a6 6 0 0 1-10.24 4.24L6 14.5M7.76 18.5H6V20"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const IconLink = ({ className }: IconProps) => (
+  <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none">
+    <path
+      d="M9.5 14.5 8 16a3.5 3.5 0 0 1-5-5l2.5-2.5a3.5 3.5 0 0 1 5 0"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M14.5 9.5 16 8a3.5 3.5 0 1 1 5 5l-2.5 2.5a3.5 3.5 0 0 1-5 0"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M9 15 15 9"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const IconCopy = ({ className }: IconProps) => (
+  <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none">
+    <rect
+      x="9"
+      y="7"
+      width="9"
+      height="11"
+      rx="1.5"
+      stroke="currentColor"
+      strokeWidth="1.6"
+    />
+    <rect
+      x="6"
+      y="5"
+      width="9"
+      height="11"
+      rx="1.5"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      opacity="0.6"
+    />
+  </svg>
+);
+
 // ---- Fake AI generator (will later be replaced by real API call) ----
 async function generateWeekendItinerary(
   form: WeekendFormData
@@ -864,55 +985,66 @@ function ResultPage() {
         </div>
 
         {/* Bottom actions */}
-        <div className="flex flex-col md:flex-row gap-3">
-          <a
-            href="/plan"
-            className="px-4 py-2 rounded-xl border border-slate-700 text-sm text-slate-300 hover:border-slate-500 transition text-center flex-1"
-          >
-            Edit answers
-          </a>
+        <div className="flex flex-col gap-3">
+          {/* Primary actions */}
+          <div className="flex flex-col md:flex-row gap-3">
+            <a
+              href="/plan"
+              className="px-4 py-2 rounded-xl border border-slate-700 text-sm text-slate-300 hover:border-slate-500 transition-transform transition-colors text-center flex-1 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.97] active:translate-y-[1px]"
+            >
+              <IconEdit className="w-4 h-4" />
+              <span>Edit answers</span>
+            </a>
 
-          <button
-            type="button"
-            onClick={handleShareLink}
-            className="px-5 py-2 rounded-xl text-sm font-semibold bg-slate-800 text-slate-100 border border-slate-600 shadow hover:scale-[1.02] transition flex-1"
-          >
-            {shareCopied ? "Link copied ✓" : "Copy share link"}
-          </button>
+            <button
+              type="button"
+              onClick={handlePrint}
+              className="px-5 py-2 rounded-xl text-sm font-semibold bg-white text-slate-900 shadow transition-transform transition-colors flex-1 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.97] active:translate-y-[1px]"
+            >
+              <IconPrint className="w-4 h-4" />
+              <span>Print / Save PDF</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => {
-              const text = formatWeekendAsText(weekend, form);
-              if (navigator && navigator.clipboard) {
-                navigator.clipboard
-                  .writeText(text)
-                  .catch((err) =>
-                    console.error("Failed to copy weekend plan", err)
-                  );
-              }
-            }}
-            className="px-5 py-2 rounded-xl text-sm font-semibold bg-slate-800 text-slate-100 border border-slate-600 shadow hover:scale-[1.02] transition flex-1"
-          >
-            Copy plan text
-          </button>
+            <button
+              type="button"
+              onClick={handleRegenerate}
+              disabled={regenLoading}
+              className="px-5 py-2 rounded-xl text-sm font-semibold bg-white text-slate-900 shadow transition-transform transition-colors flex-1 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.97] active:translate-y-[1px] disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <IconRefresh className="w-4 h-4" />
+              <span>{regenLoading ? "Regenerating…" : "Regenerate plan"}</span>
+            </button>
+          </div>
 
-          <button
-            type="button"
-            onClick={handlePrint}
-            className="px-5 py-2 rounded-xl text-sm font-semibold bg-white text-slate-900 shadow hover:scale-[1.02] transition flex-1"
-          >
-            Print / Save PDF
-          </button>
+          {/* Secondary actions */}
+          <div className="flex flex-col md:flex-row gap-3">
+            <button
+              type="button"
+              onClick={handleShareLink}
+              className="px-5 py-2 rounded-xl text-sm font-semibold bg-slate-800 text-slate-100 border border-slate-600 shadow transition-transform transition-colors flex-1 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.97] active:translate-y-[1px]"
+            >
+              <IconLink className="w-4 h-4" />
+              <span>{shareCopied ? "Link copied ✓" : "Copy share link"}</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={handleRegenerate}
-            disabled={regenLoading}
-            className="px-5 py-2 rounded-xl text-sm font-semibold bg-white text-slate-900 shadow hover:scale-[1.02] transition flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {regenLoading ? "Regenerating…" : "Regenerate plan"}
-          </button>
+            <button
+              type="button"
+              onClick={() => {
+                const text = formatWeekendAsText(weekend, form);
+                if (navigator && navigator.clipboard) {
+                  navigator.clipboard
+                    .writeText(text)
+                    .catch((err) =>
+                      console.error("Failed to copy weekend plan", err)
+                    );
+                }
+              }}
+              className="px-5 py-2 rounded-xl text-sm font-semibold bg-slate-800 text-slate-100 border border-slate-600 shadow transition-transform transition-colors flex-1 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.97] active:translate-y-[1px]"
+            >
+              <IconCopy className="w-4 h-4" />
+              <span>Copy plan text</span>
+            </button>
+          </div>
         </div>
 
         <p className="pt-4 text-[11px] text-slate-500 text-center">
