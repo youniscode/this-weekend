@@ -44,12 +44,33 @@ interface WeekendItinerary {
   days: ItineraryDay[];
 }
 
+// Small helper: map mood → emoji icon
+function getMoodIcon(mood: MoodType): string {
+  switch (mood) {
+    case "chill":
+      return "🌙";
+    case "foodie":
+      return "🍽️";
+    case "explore":
+      return "🧭";
+    case "cultural":
+      return "🏛️";
+    case "outdoors":
+      return "🌲";
+    case "nightlife":
+      return "🌃";
+    default:
+      return "";
+  }
+}
+
+// Human-friendly labels for moods
 function getMoodLabel(mood: MoodType): string {
   switch (mood) {
-    case "foodie":
-      return "Foodie";
     case "chill":
       return "Chill";
+    case "foodie":
+      return "Foodie";
     case "explore":
       return "Explore";
     case "cultural":
@@ -1169,8 +1190,11 @@ function SharedPage() {
           <div className="space-y-2">
             <div className="flex justify-between gap-4">
               <span className="text-slate-400">Mood</span>
-              <span className="font-medium capitalize">{form.mood}</span>
+              <span className={getMoodChipClasses(form.mood)}>
+                {getMoodLabel(form.mood)}
+              </span>
             </div>
+
             <div className="flex justify-between gap-4">
               <span className="text-slate-400">Budget</span>
               <span className="font-medium">{form.budget}</span>
@@ -1226,8 +1250,9 @@ function SharedPage() {
                           <h4 className="font-semibold text-sm md:text-base">
                             {activity.title}
                           </h4>
-                          <span className="text-[11px] uppercase tracking-wide text-slate-400">
-                            {activity.kind}
+                          <span className="text-[11px] uppercase tracking-wide text-slate-400 flex items-center gap-1">
+                            <span>{getKindIcon(activity.kind)}</span>
+                            <span>{activity.kind}</span>
                           </span>
                         </div>
                         <p className="text-sm text-slate-300">
@@ -1254,47 +1279,134 @@ function SharedPage() {
           ))}
         </div>
 
-        {/* Bottom actions */}
-        <div className="flex flex-col md:flex-row gap-3">
-          <button
-            type="button"
-            onClick={handleShareLink}
-            className="px-5 py-2 rounded-xl text-sm font-semibold bg-slate-800 text-slate-100 border border-slate-600 shadow hover:scale-[1.02] transition flex-1"
-          >
-            {shareCopied ? "Link copied ✓" : "Copy share link"}
-          </button>
+        {/* Bottom actions – fixed on mobile, glass blur */}
+        <div
+          className="
+    fixed bottom-0 left-0 right-0 z-30
+    bg-slate-900/70 backdrop-blur-md border-t border-slate-700/70 px-4 py-3
+    md:static md:bg-transparent md:backdrop-blur-0 md:border-t-0 md:px-0 md:py-0 md:mt-6
+  "
+        >
+          <div className="max-w-3xl mx-auto flex flex-col md:flex-row gap-3">
+            {/* --- Copy Share Link --- */}
+            <button
+              type="button"
+              onClick={handleShareLink}
+              className="px-5 py-2 rounded-xl text-sm font-semibold bg-slate-900/70 text-slate-100 border border-slate-500/60 shadow-sm 
+         flex-1 flex items-center justify-center gap-2
+         transition transform hover:scale-[1.02] active:scale-[0.97] active:translate-y-[1px]"
+            >
+              {/* Link icon */}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M13.828 10.172a4 4 0 010 5.656l-3 3a4 4 0 
+           01-5.656-5.656l1.5-1.5"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M10.172 13.828a4 4 0 010-5.656l3-3a4 4 
+           0 015.656 5.656l-1.5 1.5"
+                />
+              </svg>
+              {shareCopied ? "Link copied ✓" : "Copy share link"}
+            </button>
 
-          <button
-            type="button"
-            onClick={() => {
-              const text = formatWeekendAsText(weekend, form);
-              if (navigator && navigator.clipboard) {
-                navigator.clipboard
-                  .writeText(text)
+            {/* --- Copy text version --- */}
+            <button
+              type="button"
+              onClick={() => {
+                const text = formatWeekendAsText(weekend, form);
+                navigator?.clipboard
+                  ?.writeText(text)
                   .catch((err) =>
                     console.error("Failed to copy weekend plan", err)
                   );
-              }
-            }}
-            className="px-5 py-2 rounded-xl text-sm font-semibold bg-slate-800 text-slate-100 border border-slate-600 shadow hover:scale-[1.02] transition flex-1"
-          >
-            Copy plan text
-          </button>
+              }}
+              className="px-5 py-2 rounded-xl text-sm font-semibold bg-slate-900/70 text-slate-100 border border-slate-500/60 shadow-sm 
+         flex-1 flex items-center justify-center gap-2
+         transition transform hover:scale-[1.02] active:scale-[0.97] active:translate-y-[1px]"
+            >
+              {/* Copy icon */}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 
+           012-2h6a2 2 0 012 2v2"
+                />
+                <rect width="8" height="8" x="10" y="10" rx="2" ry="2" />
+              </svg>
+              Copy plan text
+            </button>
 
-          <button
-            type="button"
-            onClick={handlePrint}
-            className="px-5 py-2 rounded-xl text-sm font-semibold bg-white text-slate-900 shadow hover:scale-[1.02] transition flex-1"
-          >
-            Print / Save PDF
-          </button>
+            {/* --- Print / PDF --- */}
+            <button
+              type="button"
+              onClick={handlePrint}
+              className="px-5 py-2 rounded-xl text-sm font-semibold bg-white/95 text-slate-900 shadow 
+         flex-1 flex items-center justify-center gap-2
+         transition transform hover:scale-[1.02] active:scale-[0.97] active:translate-y-[1px]"
+            >
+              {/* Printer icon */}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 9V2h12v7m-1 11H7m12-11a2 2 0 012 2v5h-4v3H7v-3H3v-5a2 2 0 012-2h14z"
+                />
+              </svg>
+              Print / Save PDF
+            </button>
 
-          <a
-            href="/plan"
-            className="px-4 py-2 rounded-xl border border-slate-700 text-sm text-slate-300 hover:border-slate-500 transition text-center flex-1"
-          >
-            Plan your own weekend
-          </a>
+            {/* --- CTA: Make your own weekend --- */}
+            <a
+              href="/plan"
+              className="px-4 py-2 rounded-xl border border-slate-600/70 text-sm text-slate-200 
+         hover:border-slate-400 text-center flex-1 flex items-center justify-center gap-2
+         transition transform hover:scale-[1.02] active:scale-[0.97] active:translate-y-[1px]"
+            >
+              {/* Arrow icon */}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              Plan your own weekend
+            </a>
+          </div>
         </div>
       </div>
     </div>
