@@ -82,56 +82,92 @@ export default async function handler(req: Request): Promise<Response> {
         });
     }
 
-    const prompt = `
-You are a helpful weekend travel + lifestyle planner.
-
-User preferences:
-- City: ${form.city}
-- Group: ${form.group || "n/a"}
-- Mood: ${form.mood || "n/a"}
-- Budget: ${form.budget || "n/a"}
-- Days: ${form.days || "n/a"}
-
-Return a JSON object with this exact TypeScript shape and nothing else (no markdown, no comments):
-
-{
-  "itinerary": {
-    "city": "City name",
-    "days": [
-      {
-        "label": "Saturday" | "Sunday",
-        "summary": "Short summary of the day.",
-        "activities": [
-          {
-            "time": "10:00",
-            "title": "Title of activity",
-            "kind": "food" | "activity" | "coffee" | "nightlife",
-            "description": "1–2 sentence description.",
-            "area": "Neighbourhood or area",
-            "priceLevel": "€" | "€€" | "€€€"
-          }
-        ]
-      }
-    ]
-  }
-}
-  `.trim();
+    // Strong, structured JSON-only prompt
+    const messages = [
+        {
+            role: "system" as const,
+            content:
+                "You are THIS WEEKEND, a calm, tasteful local concierge that builds simple, realistic weekend plans for normal people. " +
+                "You always return JSON only, no markdown, no explanations. " +
+                "You focus on doable, walkable plans with realistic timing, not too many activities.",
+        },
+        {
+            role: "user" as const,
+            content: JSON.stringify({
+                instructions:
+                    "Create a weekend itinerary as JSON only. Follow the exact schema given below. Do not include any extra top-level fields or comments.",
+                schema: {
+                    WeekendPlanResponse: {
+                        itinerary: {
+                            city: "string",
+                            days: [
+                                {
+                                    label:
+                                        '"Saturday" or "Sunday" depending on the user\'s available days',
+                                    summary:
+                                        "1–2 short sentences summarising the day in a soft, human tone.",
+                                    activities: [
+                                        {
+                                            time: 'string in 24h format, e.g. "10:00"',
+                                            title: "short activity title",
+                                            kind:
+                                                '"food" | "activity" | "coffee" | "nightlife" (choose the closest one)',
+                                            description:
+                                                "1–3 short sentences with what they will do, always grounded and realistic.",
+                                            area:
+                                                "optional short area or neighbourhood label, or null/empty if not relevant",
+                                            priceLevel:
+                                                '"€" | "€€" | "€€€" depending on budget, or null if not relevant for this step',
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    },
+                },
+                rules: [
+                    "Return ONLY valid JSON. No markdown, no backticks, no comments, no explanations.",
+                    "The root object MUST have the shape: { \"itinerary\": { city, days[] } }.",
+                    "Use 3–5 activities per day, not more.",
+                    "Respect the user budget when choosing priceLevel.",
+                    "If days = 'half-day', create only one shorter day (label either Saturday or Sunday, you decide).",
+                    "If days = 'sat', create exactly one day with label 'Saturday'.",
+                    "If days = 'sun', create exactly one day with label 'Sunday'.",
+                    "If days = 'both', create exactly two days: one with label 'Saturday' and one with label 'Sunday'.",
+                    "Use the city name in a natural way but do NOT invent very specific restaurant or venue names. Use generic labels like 'cosy bistro', 'local café', 'nice viewpoint', 'small museum', etc.",
+                    "Align the vibe with mood: 'foodie' → more food/coffee focus; 'nightlife' → add exactly one nightlife item; 'chill' → slower pace, more breaks; 'outdoors' → more walks/views/parks; 'cultural' → museums and local culture; 'explore' → mix of walking, discovering neighbourhoods, views.",
+                    "Be realistic with times, leave gaps between activities.",
+                    "Avoid over-scheduling. The plan should feel doable without rushing.",
+                ],
+                userInput: {
+                    city: form.city,
+                    group: form.group,
+                    mood: form.mood,
+                    budget: form.budget,
+                    days: form.days,
+                },
+                expectedOutputShape: {
+                    itinerary: {
+                        city: "string (same as user city, but may be formatted nicely)",
+                        days: [
+                            {
+                                label: '"Saturday" or "Sunday"',
+                                summary: "string",
+                                activities:
+                                    "array of activities as defined above",
+                            },
+                        ],
+                    },
+                },
+            }),
+        },
+    ];
 
     try {
         const completion = await client.chat.completions.create({
             model: "gpt-4o-mini",
             temperature: 0.7,
-            messages: [
-                {
-                    role: "system",
-                    content:
-                        "You generate structured, realistic weekend plans and respond ONLY with valid JSON.",
-                },
-                {
-                    role: "user",
-                    content: prompt,
-                },
-            ],
+            messages,
         });
 
         const raw = completion.choices[0]?.message?.content ?? "{}";

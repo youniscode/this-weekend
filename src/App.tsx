@@ -635,7 +635,7 @@ function ResultPage() {
     const query = buildShareQuery(form);
     if (typeof window === "undefined" || !navigator?.clipboard) return;
 
-    const url = `${window.location.origin}/results?${query}`;
+    const url = `${window.location.origin}/shared?${query}`;
 
     navigator.clipboard
       .writeText(url)
@@ -861,12 +861,257 @@ function ResultPage() {
   );
 }
 
+function SharedPage() {
+  const location = useLocation();
+  const form = formFromSearch(location.search);
+
+  const [itinerary, setItinerary] = useState<WeekendItinerary | null>(null);
+  const [shareCopied, setShareCopied] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!form) return;
+
+    generateWeekendItinerary(form).then((result) => {
+      if (!cancelled) {
+        setItinerary(result);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [form]);
+
+  const handleShareLink = () => {
+    if (!form) return;
+
+    const query = buildShareQuery(form);
+    if (typeof window === "undefined" || !navigator?.clipboard) return;
+
+    const url = `${window.location.origin}/shared?${query}`;
+
+    navigator.clipboard
+      .writeText(url)
+      .then(() => {
+        setShareCopied(true);
+        setTimeout(() => setShareCopied(false), 1500);
+      })
+      .catch((err) => console.error("Failed to copy share link", err));
+  };
+
+  const handlePrint = () => {
+    if (typeof window === "undefined") return;
+    window.print();
+  };
+
+  if (!form) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-900 text-gray-100 font-sans px-4">
+        <div className="text-center space-y-4">
+          <p className="text-sm text-slate-400">No shared weekend found.</p>
+          <a
+            href="/plan"
+            className="inline-flex items-center px-4 py-2 rounded-xl bg-white text-slate-900 text-sm font-semibold shadow hover:scale-[1.02] transition"
+          >
+            Plan your own weekend
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  if (!itinerary) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-900 text-gray-100 font-sans px-4">
+        <div className="text-center space-y-3">
+          <p className="text-sm uppercase tracking-[0.2em] text-slate-400">
+            Loading
+          </p>
+          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
+            Loading a shared weekend in {form.city || "this city"}…
+          </h2>
+          <p className="text-sm md:text-base text-slate-300 opacity-90">
+            This is a shared, read-only view of someone&apos;s weekend plan.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const weekend = itinerary;
+
+  return (
+    <div className="min-h-screen bg-slate-900 text-gray-100 font-sans px-4 py-10 flex justify-center">
+      <div className="w-full max-w-3xl space-y-8">
+        {/* Header */}
+        <div className="text-center space-y-2">
+          <p className="text-sm uppercase tracking-[0.2em] text-slate-400">
+            Shared weekend
+          </p>
+          <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+            Weekend in {weekend.city || "the city"}
+          </h2>
+          <p className="text-base md:text-lg text-slate-300 opacity-90">
+            This is a read-only plan shared from This Weekend.
+          </p>
+        </div>
+
+        {/* Preferences recap */}
+        <div className="bg-slate-800/60 border border-slate-700 rounded-2xl p-5 md:p-6 shadow-xl grid grid-cols-1 md:grid-cols-2 gap-4 text-sm md:text-base">
+          <div className="space-y-2">
+            <div className="flex justify-between gap-4">
+              <span className="text-slate-400">City</span>
+              <span className="font-medium truncate">{form.city}</span>
+            </div>
+            <div className="flex justify-between gap-4">
+              <span className="text-slate-400">Group</span>
+              <span className="font-medium capitalize">{form.group}</span>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <div className="flex justify-between gap-4">
+              <span className="text-slate-400">Mood</span>
+              <span className="font-medium capitalize">{form.mood}</span>
+            </div>
+            <div className="flex justify-between gap-4">
+              <span className="text-slate-400">Budget</span>
+              <span className="font-medium">{form.budget}</span>
+            </div>
+            <div className="flex justify-between gap-4">
+              <span className="text-slate-400">Time</span>
+              <span className="font-medium">
+                {form.days === "sat" && "Saturday only"}
+                {form.days === "sun" && "Sunday only"}
+                {form.days === "both" && "Both days"}
+                {form.days === "half-day" && "Half-day plan"}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Timeline / cards */}
+        <div className="space-y-6">
+          {weekend.days.map((day) => (
+            <div
+              key={day.label}
+              className="bg-slate-800/60 border border-slate-700 rounded-2xl p-5 md:p-6 shadow-xl"
+            >
+              <div className="flex items-baseline justify-between gap-3 mb-4">
+                <div>
+                  <h3 className="text-xl md:text-2xl font-semibold">
+                    {day.label}
+                  </h3>
+                  <p className="text-sm text-slate-400 mt-1">{day.summary}</p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                {day.activities.map((activity) => (
+                  <div
+                    key={day.label + activity.time + activity.title}
+                    className="flex gap-4"
+                  >
+                    <div className="w-16 flex-shrink-0 text-right">
+                      <p className="text-sm font-semibold text-slate-300">
+                        {activity.time}
+                      </p>
+                    </div>
+
+                    <div className="relative flex-1">
+                      {/* vertical line */}
+                      <div className="absolute -left-4 top-0 bottom-0 w-px bg-slate-700" />
+                      {/* dot */}
+                      <div className="absolute -left-4 top-2 w-2 h-2 rounded-full bg-white" />
+
+                      <div className="bg-slate-900/80 border border-slate-700 rounded-xl p-3 md:p-4">
+                        <div className="flex items-center justify-between gap-3 mb-1">
+                          <h4 className="font-semibold text-sm md:text-base">
+                            {activity.title}
+                          </h4>
+                          <span className="text-[11px] uppercase tracking-wide text-slate-400">
+                            {activity.kind}
+                          </span>
+                        </div>
+                        <p className="text-sm text-slate-300">
+                          {activity.description}
+                        </p>
+                        <div className="flex flex-wrap gap-2 mt-2 text-[11px] text-slate-400">
+                          {activity.area && (
+                            <span className="px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700">
+                              {activity.area}
+                            </span>
+                          )}
+                          {activity.priceLevel && (
+                            <span className="px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700">
+                              {activity.priceLevel}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Bottom actions */}
+        <div className="flex flex-col md:flex-row gap-3">
+          <button
+            type="button"
+            onClick={handleShareLink}
+            className="px-5 py-2 rounded-xl text-sm font-semibold bg-slate-800 text-slate-100 border border-slate-600 shadow hover:scale-[1.02] transition flex-1"
+          >
+            {shareCopied ? "Link copied ✓" : "Copy share link"}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              const text = formatWeekendAsText(weekend, form);
+              if (navigator && navigator.clipboard) {
+                navigator.clipboard
+                  .writeText(text)
+                  .catch((err) =>
+                    console.error("Failed to copy weekend plan", err)
+                  );
+              }
+            }}
+            className="px-5 py-2 rounded-xl text-sm font-semibold bg-slate-800 text-slate-100 border border-slate-600 shadow hover:scale-[1.02] transition flex-1"
+          >
+            Copy plan text
+          </button>
+
+          <button
+            type="button"
+            onClick={handlePrint}
+            className="px-5 py-2 rounded-xl text-sm font-semibold bg-white text-slate-900 shadow hover:scale-[1.02] transition flex-1"
+          >
+            Print / Save PDF
+          </button>
+
+          <a
+            href="/plan"
+            className="px-4 py-2 rounded-xl border border-slate-700 text-sm text-slate-300 hover:border-slate-500 transition text-center flex-1"
+          >
+            Plan your own weekend
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   return (
     <Routes>
       <Route path="/" element={<HomeHero />} />
       <Route path="/plan" element={<PlanPage />} />
       <Route path="/results" element={<ResultPage />} />
+      <Route path="/shared" element={<SharedPage />} />
     </Routes>
   );
 }
