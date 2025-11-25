@@ -918,9 +918,13 @@ function ResultPage() {
             <div className="flex justify-between gap-4">
               <span className="text-slate-400">Mood</span>
               <span className={getMoodChipClasses(form.mood)}>
-                {getMoodLabel(form.mood)}
+                {getMoodIcon(form.mood) && (
+                  <span className="mr-1">{getMoodIcon(form.mood)}</span>
+                )}
+                <span>{getMoodLabel(form.mood)}</span>
               </span>
             </div>
+
             <div className="flex justify-between gap-4">
               <span className="text-slate-400">Budget</span>
               <span className="font-medium">{form.budget}</span>
@@ -1191,7 +1195,10 @@ function SharedPage() {
             <div className="flex justify-between gap-4">
               <span className="text-slate-400">Mood</span>
               <span className={getMoodChipClasses(form.mood)}>
-                {getMoodLabel(form.mood)}
+                {getMoodIcon(form.mood) && (
+                  <span className="mr-1">{getMoodIcon(form.mood)}</span>
+                )}
+                <span>{getMoodLabel(form.mood)}</span>
               </span>
             </div>
 
