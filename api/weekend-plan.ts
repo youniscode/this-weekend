@@ -128,17 +128,44 @@ export default async function handler(req: Request): Promise<Response> {
                 rules: [
                     "Return ONLY valid JSON. No markdown, no backticks, no comments, no explanations.",
                     "The root object MUST have the shape: { \"itinerary\": { city, days[] } }.",
-                    "Use 3–5 activities per day, not more.",
+                    "Use 3–5 activities per full day. For a half-day plan, use 2–3 activities.",
                     "Respect the user budget when choosing priceLevel.",
                     "If days = 'half-day', create only one shorter day (label either Saturday or Sunday, you decide).",
                     "If days = 'sat', create exactly one day with label 'Saturday'.",
                     "If days = 'sun', create exactly one day with label 'Sunday'.",
                     "If days = 'both', create exactly two days: one with label 'Saturday' and one with label 'Sunday'.",
                     "Use the city name in a natural way but do NOT invent very specific restaurant or venue names. Use generic labels like 'cosy bistro', 'local café', 'nice viewpoint', 'small museum', etc.",
-                    "Align the vibe with mood: 'foodie' → more food/coffee focus; 'nightlife' → add exactly one nightlife item; 'chill' → slower pace, more breaks; 'outdoors' → more walks/views/parks; 'cultural' → museums and local culture; 'explore' → mix of walking, discovering neighbourhoods, views.",
-                    "Be realistic with times, leave gaps between activities.",
+                    "Be realistic with times, leave gaps between activities so the day does not feel rushed.",
                     "Avoid over-scheduling. The plan should feel doable without rushing.",
+
+                    // Mood-specific behaviour
+                    "If mood = 'foodie': every full day should have at least 2 food-related stops (brunch/lunch/dinner) plus optionally a coffee stop. Focus on discovering different food spots.",
+                    "If mood = 'chill': prefer slower days with fewer total activities, more cafés, parks, and gentle walks. No intense sightseeing schedule.",
+                    "If mood = 'explore': mix neighbourhood walks, viewpoints, and a couple of light cultural spots. The day should feel like discovering new corners of the city.",
+                    "If mood = 'cultural': include museums, galleries, historical areas, local districts with identity. You can still include 1–2 food/coffee stops to keep the day balanced.",
+                    "If mood = 'outdoors': prioritise walks, parks, waterfronts, viewpoints, light hikes if appropriate. Food/coffee stops support the outdoor day, not the main focus.",
+                    "If mood = 'nightlife': include exactly one nightlife-related activity in the evening (bar, wine bar, cocktail bar, live music, small club). Make the rest of the day lighter so they still have energy.",
+
+                    // Group + mood interaction
+                    "If group = 'couple': favour cosy, intimate spots, good views, pleasant walks, and nicer dinners. Nightlife (if present) should feel relaxed and not too wild.",
+                    "If group = 'friends': it is okay to include more social activities (lively areas, bars, shared experiences). The schedule can be a bit more dynamic, but still realistic.",
+                    "If group = 'family': always keep activities family-friendly and kid-friendly. Avoid nightlife. Prefer parks, easy walks, simple cultural visits, and relaxed food spots.",
+                    "If group = 'solo': design the day to feel safe and comfortable for one person. Cafés, walks, viewpoints, small museums, and optionally a calm bar for nightlife mood are good choices.",
+
+                    // Time-of-day logic
+                    "Breakfast / coffee slots should be between 08:00 and 11:00.",
+                    "Lunch slots should be between 12:00 and 14:30.",
+                    "Afternoon activities should be between 14:00 and 18:00.",
+                    "Dinner slots should be between 19:00 and 21:30.",
+                    "Nightlife activities (if any) should be between 21:30 and 01:00 at the latest.",
+
+                    // Kinds
+                    "Use 'food' for meals (brunch, lunch, dinner) and food-centric stops.",
+                    "Use 'coffee' for cafés, pastry stops, tea houses, etc.",
+                    "Use 'activity' for walks, viewpoints, museums, galleries, parks, and other non-food activities.",
+                    "Use 'nightlife' ONLY for bars, wine bars, live music, clubs, or late-evening social spots."
                 ],
+
                 userInput: {
                     city: form.city,
                     group: form.group,
