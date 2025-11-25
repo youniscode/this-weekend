@@ -44,6 +44,61 @@ interface WeekendItinerary {
   days: ItineraryDay[];
 }
 
+function getMoodLabel(mood: MoodType): string {
+  switch (mood) {
+    case "foodie":
+      return "Foodie";
+    case "chill":
+      return "Chill";
+    case "explore":
+      return "Explore";
+    case "cultural":
+      return "Cultural";
+    case "outdoors":
+      return "Outdoors";
+    case "nightlife":
+      return "Nightlife";
+    default:
+      return "Any mood";
+  }
+}
+
+function getMoodChipClasses(mood: MoodType): string {
+  const base =
+    "inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium border";
+  switch (mood) {
+    case "foodie":
+      return `${base} bg-amber-500/10 border-amber-400/40 text-amber-200`;
+    case "chill":
+      return `${base} bg-sky-500/10 border-sky-400/40 text-sky-200`;
+    case "explore":
+      return `${base} bg-emerald-500/10 border-emerald-400/40 text-emerald-200`;
+    case "cultural":
+      return `${base} bg-purple-500/10 border-purple-400/40 text-purple-200`;
+    case "outdoors":
+      return `${base} bg-lime-500/10 border-lime-400/40 text-lime-200`;
+    case "nightlife":
+      return `${base} bg-pink-500/10 border-pink-400/40 text-pink-200`;
+    default:
+      return `${base} bg-slate-700/60 border-slate-500/50 text-slate-200`;
+  }
+}
+
+function getKindIcon(kind: ActivityKind): string {
+  switch (kind) {
+    case "food":
+      return "🍽️";
+    case "coffee":
+      return "☕";
+    case "activity":
+      return "🎯";
+    case "nightlife":
+      return "🌙";
+    default:
+      return "•";
+  }
+}
+
 function formatWeekendAsText(
   weekend: WeekendItinerary,
   form: WeekendFormData
@@ -720,7 +775,9 @@ function ResultPage() {
           <div className="space-y-2">
             <div className="flex justify-between gap-4">
               <span className="text-slate-400">Mood</span>
-              <span className="font-medium capitalize">{form.mood}</span>
+              <span className={getMoodChipClasses(form.mood)}>
+                {getMoodLabel(form.mood)}
+              </span>
             </div>
             <div className="flex justify-between gap-4">
               <span className="text-slate-400">Budget</span>
@@ -777,8 +834,9 @@ function ResultPage() {
                           <h4 className="font-semibold text-sm md:text-base">
                             {activity.title}
                           </h4>
-                          <span className="text-[11px] uppercase tracking-wide text-slate-400">
-                            {activity.kind}
+                          <span className="text-[11px] uppercase tracking-wide text-slate-400 flex items-center gap-1">
+                            <span>{getKindIcon(activity.kind)}</span>
+                            <span>{activity.kind}</span>
                           </span>
                         </div>
                         <p className="text-sm text-slate-300">
@@ -856,6 +914,12 @@ function ResultPage() {
             {regenLoading ? "Regenerating…" : "Regenerate plan"}
           </button>
         </div>
+
+        <p className="pt-4 text-[11px] text-slate-500 text-center">
+          Made with{" "}
+          <span className="font-semibold text-slate-200">THIS WEEKEND</span> ·
+          by JonasCode
+        </p>
       </div>
     </div>
   );

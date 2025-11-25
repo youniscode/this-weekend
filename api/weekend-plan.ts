@@ -126,30 +126,41 @@ export default async function handler(req: Request): Promise<Response> {
                     },
                 },
                 rules: [
+                    // General response format
                     "Return ONLY valid JSON. No markdown, no backticks, no comments, no explanations.",
                     "The root object MUST have the shape: { \"itinerary\": { city, days[] } }.",
                     "Use 3–5 activities per full day. For a half-day plan, use 2–3 activities.",
                     "Respect the user budget when choosing priceLevel.",
+                    "If budget is empty or unknown, treat it as '€€' (medium comfort).",
+
+                    // Days logic
                     "If days = 'half-day', create only one shorter day (label either Saturday or Sunday, you decide).",
+                    "If days = 'half-day', the time window should be about 4–6 hours total and must NOT include nightlife activities.",
                     "If days = 'sat', create exactly one day with label 'Saturday'.",
                     "If days = 'sun', create exactly one day with label 'Sunday'.",
                     "If days = 'both', create exactly two days: one with label 'Saturday' and one with label 'Sunday'.",
-                    "Use the city name in a natural way but do NOT invent very specific restaurant or venue names. Use generic labels like 'cosy bistro', 'local café', 'nice viewpoint', 'small museum', etc.",
+
+                    // City & realism
+                    "Use the city name in a natural way but do NOT invent very specific restaurant or venue names. Use generic labels like 'cosy bistro', 'local café', 'nice viewpoint', 'small museum', 'family-friendly park', etc.",
                     "Be realistic with times, leave gaps between activities so the day does not feel rushed.",
                     "Avoid over-scheduling. The plan should feel doable without rushing.",
 
                     // Mood-specific behaviour
+                    "If mood is empty or unknown, behave like a mix of 'chill' and 'explore': gentle pace, cafés, walks, and 1–2 light activities.",
                     "If mood = 'foodie': every full day should have at least 2 food-related stops (brunch/lunch/dinner) plus optionally a coffee stop. Focus on discovering different food spots.",
                     "If mood = 'chill': prefer slower days with fewer total activities, more cafés, parks, and gentle walks. No intense sightseeing schedule.",
                     "If mood = 'explore': mix neighbourhood walks, viewpoints, and a couple of light cultural spots. The day should feel like discovering new corners of the city.",
                     "If mood = 'cultural': include museums, galleries, historical areas, local districts with identity. You can still include 1–2 food/coffee stops to keep the day balanced.",
                     "If mood = 'outdoors': prioritise walks, parks, waterfronts, viewpoints, light hikes if appropriate. Food/coffee stops support the outdoor day, not the main focus.",
                     "If mood = 'nightlife': include exactly one nightlife-related activity in the evening (bar, wine bar, cocktail bar, live music, small club). Make the rest of the day lighter so they still have energy.",
+                    "If mood is NOT 'nightlife', avoid using the 'nightlife' kind entirely.",
 
                     // Group + mood interaction
-                    "If group = 'couple': favour cosy, intimate spots, good views, pleasant walks, and nicer dinners. Nightlife (if present) should feel relaxed and not too wild.",
+                    "If group is empty or unknown, assume a neutral adult group (not family with kids, not a romantic trip).",
+                    "If group = 'couple': favour cosy, intimate spots, good views, pleasant walks, and nicer dinners. Nightlife (if present for nightlife mood) should feel relaxed and not too wild.",
                     "If group = 'friends': it is okay to include more social activities (lively areas, bars, shared experiences). The schedule can be a bit more dynamic, but still realistic.",
-                    "If group = 'family': always keep activities family-friendly and kid-friendly. Avoid nightlife. Prefer parks, easy walks, simple cultural visits, and relaxed food spots.",
+                    "If group = 'family': always keep activities family-friendly and kid-friendly. Avoid nightlife entirely. Prefer parks, easy walks, simple cultural visits, and relaxed food spots.",
+                    "If group = 'family', never use the 'nightlife' kind even if mood = 'nightlife'. Instead, interpret 'nightlife' as a fun early-evening activity that is still kid-friendly (e.g., lights, waterfront walks, family-friendly events).",
                     "If group = 'solo': design the day to feel safe and comfortable for one person. Cafés, walks, viewpoints, small museums, and optionally a calm bar for nightlife mood are good choices.",
 
                     // Time-of-day logic
@@ -158,13 +169,15 @@ export default async function handler(req: Request): Promise<Response> {
                     "Afternoon activities should be between 14:00 and 18:00.",
                     "Dinner slots should be between 19:00 and 21:30.",
                     "Nightlife activities (if any) should be between 21:30 and 01:00 at the latest.",
+                    "For half-day plans, keep all activities within a compact time window (for example 09:00–13:00 or 14:00–19:00) and do not include nightlife.",
 
                     // Kinds
                     "Use 'food' for meals (brunch, lunch, dinner) and food-centric stops.",
                     "Use 'coffee' for cafés, pastry stops, tea houses, etc.",
-                    "Use 'activity' for walks, viewpoints, museums, galleries, parks, and other non-food activities.",
-                    "Use 'nightlife' ONLY for bars, wine bars, live music, clubs, or late-evening social spots."
+                    "Use 'activity' for walks, viewpoints, museums, galleries, parks, playgrounds, and other non-food activities.",
+                    "Use 'nightlife' ONLY for bars, wine bars, live music, clubs, or late-evening social spots, and only when mood = 'nightlife' and group is not 'family'."
                 ],
+
 
                 userInput: {
                     city: form.city,
